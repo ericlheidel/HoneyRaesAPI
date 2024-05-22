@@ -269,8 +269,41 @@ app.MapPost("/servicetickets", (ServiceTicket serviceTicket) =>
     // Created returns a 201 status code with a link in the headers to where the new resource can be accessed
     return Results.Created($"/servicetickets/{serviceTicket.Id}", new ServiceTicketDTO
     {
-
+        Id = serviceTicket.Id,
+        CustomerId = serviceTicket.CustomerId,
+        Customer = new CustomerDTO
+        {
+            Id = customer.Id,
+            Name = customer.Name,
+            Address = customer.Address
+        },
+        Description = serviceTicket.Description,
+        Emergency = serviceTicket.Emergency
     });
+});
+
+//++  /\\\\\\\\\\\\      /\\\\\\\\\\\\\\\   /\\\
+//++  \/\\\////////\\\   \/\\\///////////   \/\\\
+//++   \/\\\      \//\\\  \/\\\              \/\\\
+//++    \/\\\       \/\\\  \/\\\\\\\\\\\      \/\\\
+//++     \/\\\       \/\\\  \/\\\///////       \/\\\
+//++      \/\\\       \/\\\  \/\\\              \/\\\
+//++       \/\\\       /\\\   \/\\\              \/\\\
+//++        \/\\\\\\\\\\\\/    \/\\\\\\\\\\\\\\\  \/\\\\\\\\\\\\\\\
+//++         \////////////      \///////////////   \///////////////
+
+app.MapDelete("/servicetickets/{id}", (int id) =>
+{
+    ServiceTicket serviceTicket = serviceTickets.FirstOrDefault(st => st.Id == id);
+
+    if (serviceTicket == null)
+    {
+        return Results.NotFound();
+    }
+
+    serviceTickets.Remove(serviceTicket);
+
+    return Results.NoContent();
 });
 
 app.Run();
