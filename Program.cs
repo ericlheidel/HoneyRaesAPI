@@ -44,10 +44,10 @@ List<ServiceTicket> serviceTickets = new List<ServiceTicket>
     {
         Id = 1,
         CustomerId = 1,
-        EmployeeId = 1,
+        EmployeeId = null,
         Description = "iPhone broken",
-        Emergency = true,
-        DateCompleted = new DateTime(2022,05,05)
+        Emergency = false,
+        DateCompleted = null
     },
     new ServiceTicket()
     {
@@ -194,15 +194,39 @@ app.MapGet("/employees/{id}", (int id) =>
 
 app.MapGet("/servicetickets", () =>
 {
-    return serviceTickets.Select(t => new ServiceTicketDTO
+    List<ServiceTicketDTO> ticketsToReturnDTO = new List<ServiceTicketDTO>();
+
+    foreach (ServiceTicket ticket in serviceTickets)
     {
-        Id = t.Id,
-        CustomerId = t.CustomerId,
-        EmployeeId = t.EmployeeId,
-        Description = t.Description,
-        Emergency = t.Emergency,
-        DateCompleted = t.DateCompleted
-    });
+        ServiceTicketDTO ticketToReturnDTO = new ServiceTicketDTO
+        {
+            Id = ticket.Id,
+            CustomerId = ticket.CustomerId,
+            Customer = customers
+            .Where(c => c.Id == ticket.CustomerId).Select(c => new CustomerDTO
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Address = c.Address
+
+            }).FirstOrDefault(),
+            EmployeeId = ticket.EmployeeId,
+            Employee = employees
+            .Where(e => e.Id == ticket.EmployeeId).Select(e => new EmployeeDTO
+            {
+                Id = e.Id,
+                Name = e.Name,
+                Specialty = e.Specialty
+            }).FirstOrDefault(),
+            Description = ticket.Description,
+            Emergency = ticket.Emergency,
+            DateCompleted = ticket.DateCompleted
+        };
+
+        ticketsToReturnDTO.Add(ticketToReturnDTO);
+    }
+
+    return Results.Ok(ticketsToReturnDTO);
 });
 
 app.MapGet("/servicetickets/{id}", (int id) =>
@@ -239,6 +263,86 @@ app.MapGet("/servicetickets/{id}", (int id) =>
         Emergency = serviceTicket.Emergency,
         DateCompleted = serviceTicket.DateCompleted
     });
+});
+
+app.MapGet("/servicetickets/emergencies", () =>
+{
+    List<ServiceTicketDTO> emergencyTicketsDTO = new List<ServiceTicketDTO>();
+
+    List<ServiceTicket> emergencyTickets = serviceTickets
+        .Where(st => st.DateCompleted == null && st.Emergency == true).ToList();
+
+    foreach (ServiceTicket emergencyTicket in emergencyTickets)
+    {
+        ServiceTicketDTO emergencyTicketDTO = new ServiceTicketDTO
+        {
+            Id = emergencyTicket.Id,
+            CustomerId = emergencyTicket.CustomerId,
+            Customer = customers
+            .Where(c => c.Id == emergencyTicket.CustomerId).Select(c => new CustomerDTO
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Address = c.Address
+
+            }).FirstOrDefault(),
+            EmployeeId = emergencyTicket.EmployeeId,
+            Employee = employees
+            .Where(e => e.Id == emergencyTicket.EmployeeId).Select(e => new EmployeeDTO
+            {
+                Id = e.Id,
+                Name = e.Name,
+                Specialty = e.Specialty
+            }).FirstOrDefault(),
+            Description = emergencyTicket.Description,
+            Emergency = emergencyTicket.Emergency,
+            DateCompleted = emergencyTicket.DateCompleted
+        };
+
+        emergencyTicketsDTO.Add(emergencyTicketDTO);
+    }
+
+    return Results.Ok(emergencyTicketsDTO);
+});
+
+app.MapGet("/servicetickets/unassigned", () =>
+{
+    List<ServiceTicketDTO> unassignedTicketsDTO = new List<ServiceTicketDTO>();
+
+    List<ServiceTicket> unassignedTickets = serviceTickets
+    .Where(st => st.EmployeeId == null).ToList();
+
+    foreach (ServiceTicket unassignedTicket in unassignedTickets)
+    {
+        ServiceTicketDTO unassignedTicketDTO = new ServiceTicketDTO
+        {
+            Id = unassignedTicket.Id,
+            CustomerId = unassignedTicket.CustomerId,
+            Customer = customers
+            .Where(c => c.Id == unassignedTicket.CustomerId).Select(c => new CustomerDTO
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Address = c.Address
+
+            }).FirstOrDefault(),
+            EmployeeId = unassignedTicket.EmployeeId,
+            Employee = employees
+            .Where(e => e.Id == unassignedTicket.EmployeeId).Select(e => new EmployeeDTO
+            {
+                Id = e.Id,
+                Name = e.Name,
+                Specialty = e.Specialty
+            }).FirstOrDefault(),
+            Description = unassignedTicket.Description,
+            Emergency = unassignedTicket.Emergency,
+            DateCompleted = unassignedTicket.DateCompleted
+        };
+
+        unassignedTicketsDTO.Add(unassignedTicketDTO);
+    }
+
+    return Results.Ok(unassignedTicketsDTO);
 });
 
 //++ /\\\\\\\\\\\\\        /\\\\\         /\\\\\\\\\\\    /\\\\\\\\\\\\\\\
@@ -313,15 +417,15 @@ app.MapDelete("/servicetickets/{id}", (int id) =>
     return Results.NoContent();
 });
 
-//++  /\\\\\\\\\\\\\     /\\\        /\\\   /\\\\\\\\\\\\\\\         
-//++  \/\\\/////////\\\  \/\\\       \/\\\  \///////\\\/////         
-//++   \/\\\       \/\\\  \/\\\       \/\\\        \/\\\             
-//++    \/\\\\\\\\\\\\\/   \/\\\       \/\\\        \/\\\            
-//++     \/\\\/////////     \/\\\       \/\\\        \/\\\           
-//++      \/\\\              \/\\\       \/\\\        \/\\\          
-//++       \/\\\              \//\\\      /\\\         \/\\\         
-//++        \/\\\               \///\\\\\\\\\/          \/\\\        
-//++         \///                  \/////////            \///        
+//++  /\\\\\\\\\\\\\     /\\\        /\\\   /\\\\\\\\\\\\\\\
+//++  \/\\\/////////\\\  \/\\\       \/\\\  \///////\\\/////
+//++   \/\\\       \/\\\  \/\\\       \/\\\        \/\\\
+//++    \/\\\\\\\\\\\\\/   \/\\\       \/\\\        \/\\\
+//++     \/\\\/////////     \/\\\       \/\\\        \/\\\
+//++      \/\\\              \/\\\       \/\\\        \/\\\
+//++       \/\\\              \//\\\      /\\\         \/\\\
+//++        \/\\\               \///\\\\\\\\\/          \/\\\
+//++         \///                  \/////////            \///
 
 app.MapPut("/servicetickets/{id}", (int id, ServiceTicket serviceTicket) =>
 {
