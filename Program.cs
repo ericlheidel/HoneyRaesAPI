@@ -315,40 +315,66 @@ app.MapGet("/employees/{id}", (int id) =>
 
 app.MapGet("/servicetickets", () =>
 {
-    List<ServiceTicketDTO> ticketsToReturnDTO = new List<ServiceTicketDTO>();
-
-    foreach (ServiceTicket ticket in serviceTickets)
+    List<ServiceTicket> serviceTickets = new List<ServiceTicket>();
+    using NpgsqlConnection connection = new NpgsqlConnection(connectionString);
+    connection.Open();
+    using NpgsqlCommand command = connection.CreateCommand();
+    command.CommandText = @"
+    SELECT * FROM ServiceTicket
+    ";
+    using NpgsqlDataReader reader = command.ExecuteReader();
+    while (reader.Read())
     {
-        ServiceTicketDTO ticketToReturnDTO = new ServiceTicketDTO
+        serviceTickets.Add(new ServiceTicket
         {
-            Id = ticket.Id,
-            CustomerId = ticket.CustomerId,
-            Customer = customers
-            .Where(c => c.Id == ticket.CustomerId).Select(c => new CustomerDTO
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Address = c.Address
-
-            }).FirstOrDefault(),
-            EmployeeId = ticket.EmployeeId,
-            Employee = employees
-            .Where(e => e.Id == ticket.EmployeeId).Select(e => new EmployeeDTO
-            {
-                Id = e.Id,
-                Name = e.Name,
-                Specialty = e.Specialty
-            }).FirstOrDefault(),
-            Description = ticket.Description,
-            Emergency = ticket.Emergency,
-            DateCompleted = ticket.DateCompleted
-        };
-
-        ticketsToReturnDTO.Add(ticketToReturnDTO);
+            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+            CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+            EmployeeId = reader.IsDBNull(reader.GetOrdinal("EmployeeId")) ? null : reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+            Description = reader.GetString(reader.GetOrdinal("Description")),
+            Emergency = reader.GetBoolean(reader.GetOrdinal("Emergency")),
+            DateCompleted = reader.IsDBNull(reader.GetOrdinal("DateCompleted")) ?
+                null : reader.GetDateTime(reader.GetOrdinal("DateCompleted"))
+        });
     }
-
-    return Results.Ok(ticketsToReturnDTO);
+    return serviceTickets;
 });
+
+// app.MapGet("/servicetickets", () =>
+// {
+//     List<ServiceTicketDTO> ticketsToReturnDTO = new List<ServiceTicketDTO>();
+
+//     foreach (ServiceTicket ticket in serviceTickets)
+//     {
+//         ServiceTicketDTO ticketToReturnDTO = new ServiceTicketDTO
+//         {
+//             Id = ticket.Id,
+//             CustomerId = ticket.CustomerId,
+//             Customer = customers
+//             .Where(c => c.Id == ticket.CustomerId).Select(c => new CustomerDTO
+//             {
+//                 Id = c.Id,
+//                 Name = c.Name,
+//                 Address = c.Address
+
+//             }).FirstOrDefault(),
+//             EmployeeId = ticket.EmployeeId,
+//             Employee = employees
+//             .Where(e => e.Id == ticket.EmployeeId).Select(e => new EmployeeDTO
+//             {
+//                 Id = e.Id,
+//                 Name = e.Name,
+//                 Specialty = e.Specialty
+//             }).FirstOrDefault(),
+//             Description = ticket.Description,
+//             Emergency = ticket.Emergency,
+//             DateCompleted = ticket.DateCompleted
+//         };
+
+//         ticketsToReturnDTO.Add(ticketToReturnDTO);
+//     }
+
+//     return Results.Ok(ticketsToReturnDTO);
+// });
 
 app.MapGet("/servicetickets/{id}", (int id) =>
 {
@@ -563,8 +589,7 @@ app.MapDelete("/employees/{id}", (int id) =>
     connection.Open();
     using NpgsqlCommand command = connection.CreateCommand();
     command.CommandText = @"
-        DELETE FROM Employee
-        WHERE Id = @id
+        DELETE FROM Employee WHERE Id = @id;
     ";
     command.Parameters.AddWithValue("@id", id);
     command.ExecuteNonQuery();

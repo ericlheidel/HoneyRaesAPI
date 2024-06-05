@@ -22,3 +22,8 @@ CREATE TABLE ServiceTicket (
     Emergency BOOLEAN NOT NULL DEFAULT FALSE,
     DateCompleted TIMESTAMP  
 );
+
+ALTER TABLE ServiceTicket DROP CONSTRAINT serviceticket_employeeid_fkey;
+ALTER TABLE ServiceTicket ADD CONSTRAINT serviceticket_employeeid_fkey
+FOREIGN KEY (EmployeeId) REFERENCES Employee(Id)
+ON DELETE CASCADE;

@@ -14,4 +14,4 @@ SELECT
 	st.DateCompleted 
 FROM Employee e
 LEFT JOIN ServiceTicket st ON st.EmployeeId = e.Id
-WHERE e.Id = 2
+WHERE e.Id = 3
